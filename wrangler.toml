@@ -1,0 +1,12 @@
+name = "dojo-quiz"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Remplacez par l'adresse de votre site GitHub Pages (sans / final)
+ALLOWED_ORIGIN = "https://VOTRE-PSEUDO.github.io"
+# MODEL = "claude-sonnet-5-5"
+
+# Secrets à définir (jamais dans ce fichier) :
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#   npx wrangler secret put ACCESS_CODE

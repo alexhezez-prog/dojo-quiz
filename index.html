@@ -300,6 +300,12 @@ input[type=text],input[type=password],input[type=url]{
 
   <button class="btn" id="launch" onclick="launch()" disabled>LANCER LE DÉFI ! ⚡</button>
   <div class="err" id="home-err"></div>
+  <div class="card" id="activate" style="display:none">
+    <p class="label">Activer l'appli sur cet appareil</p>
+    <p class="muted" style="margin:0 0 6px">À faire une seule fois, par un parent.</p>
+    <input type="password" id="act-code" placeholder="Code d'activation" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="btn green small" onclick="activateFromField()">ACTIVER</button>
+  </div>
   <button class="btn ghost small" id="replay-last" onclick="replayLast()" style="display:none">↻ Refaire le dernier défi</button>
   <button class="btn yellow small" id="try-demo" onclick="demo()" style="display:none">🎮 ESSAYER UN DÉFI D'EXEMPLE</button>
 </section>
@@ -382,7 +388,7 @@ input[type=text],input[type=password],input[type=url]{
    on active chaque appareil une fois avec le lien
    https://VOTRE-PSEUDO.github.io/dojo-quiz/#cle=VOTRE-CODE
    ========================================================= */
-const DEFAULT_WORKER_URL = "";
+const DEFAULT_WORKER_URL = "https://dojo-quiz.alexhezez.workers.dev";
 const QUESTION_COUNT = 8;
 
 /* Matières du programme de 6e (cycle 3) — détectées automatiquement */
@@ -409,7 +415,6 @@ if(DEFAULT_WORKER_URL) cfg.url = DEFAULT_WORKER_URL;
   if(!h.get("cle")) return;
   cfg = {url: h.get("serveur") || cfg.url, code: h.get("cle")};
   store.set("cfg", cfg);
-  try{ history.replaceState(null, "", location.pathname + location.search); }catch{}
   window.__justActivated = true;
 })();
 
@@ -621,7 +626,7 @@ function compress(file){
 
 let tipTimer;
 async function launch(){
-  if(!cfg.url || !cfg.code){ showErr("L'application n'est pas encore activée sur cet appareil. En attendant, essaie le défi d'exemple !"); return; }
+  if(!cfg.url || !cfg.code){ showActivate(); return; }
   go("loading");
   document.getElementById("m-load").innerHTML = mascot("wow", true);
   let t=0; const tip=document.getElementById("tip"); tip.textContent=TIPS[0];
@@ -634,6 +639,7 @@ async function launch(){
     });
     const data = await res.json().catch(()=>({error:"Réponse illisible du serveur."}));
     clearInterval(tipTimer);
+    if(res.status===401){ goHome(); showErr("Code d'activation incorrect. Saisis-le à nouveau."); showActivate(); return; }
     if(!res.ok || data.error){ goHome(); showErr(data.error || "Erreur "+res.status); return; }
     if(!data.readable){ goHome(); showErr(data.problem); return; }
     lastQuiz = {title:data.title, summary:data.summary, subject:data.subject, questions:data.questions};
@@ -643,6 +649,19 @@ async function launch(){
     clearInterval(tipTimer); goHome();
     showErr("Pas de connexion au serveur. Vérifie Internet et réessaie.");
   }
+}
+
+/* ---------- Activation dans l'appli ---------- */
+function showActivate(){
+  const a=document.getElementById("activate"); a.style.display="block";
+  a.scrollIntoView({behavior:"smooth",block:"center"});
+}
+function activateFromField(){
+  const code=document.getElementById("act-code").value.trim();
+  if(!code) return;
+  cfg={url:DEFAULT_WORKER_URL||cfg.url, code}; store.set("cfg",cfg);
+  document.getElementById("activate").style.display="none";
+  window.__justActivated=true; renderHome();
 }
 
 /* ---------- Intro ---------- */
